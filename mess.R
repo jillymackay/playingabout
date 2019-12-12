@@ -1,35 +1,19 @@
----
-title: "DistractMe"
-output: html_document
----
+# I need a distraction today
 
 
-# About
-It's the 12th December and I'm in need of a distraction to stop me from continuously reading through Twitter and election news. 
-
-
-From the TidyTuesday project
-
-
-
-```{r}
 library(tidyverse)
-library(gganimate)
 library(scales)
-library(ochRe)
+library(ggwordcloud)
+
 
 
 jobs_gender <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-03-05/jobs_gender.csv")
 earnings_female <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-03-05/earnings_female.csv") 
 employed_gender <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-03-05/employed_gender.csv") 
 
-```
 
 
-Lets visualise proportion first because we might be able to get some nice gganimate stuff going on:
 
-
-```{r}
 
 employed_gender %>%
   gather(key = category, value = employed, - year) %>% 
@@ -42,38 +26,56 @@ employed_gender %>%
   geom_point(aes(shape = time, colour = gender))
 
 
-```
-
-Kind of annoying that the gender data is of that gender and not of total employment
-
-
-```{r}
 
 earnings_female %>% 
   ggplot(aes(x = Year, y = percent )) +
   geom_point(aes(colour = group)) +
   labs(y = "Female salary percent of male salary")
 
-```
 
 
-and then the big ugly dataset
+jobs_gender %>% 
+  ggplot(aes(x = as.factor(year), y = percent_female)) +
+  geom_boxplot() +
+  geom_jitter(aes(shape = major_category))
 
-```{r}
 jobs_gender %>% 
   ggplot(aes(x = total_earnings_female, y = total_earnings_male, 
              color = major_category, shape = major_category)) +
   geom_point() + 
   facet_wrap(~year)
 
-```
+jobs_gender %>% 
+  ggplot(aes(label = major_category, n = wage_percent_of_male)) +
+  geom_text_wordcloud() +
+  theme_classic()
 
 
 
 
 
-Not sure if this animation adds anything:
-```{r}
+
+
+
+
+
+library(gganimate)
+
+
+employed_gender %>%
+  gather(key = category, value = employed, - year) %>% 
+  mutate(gender = case_when(str_detect(category, "female") ~ "female",
+                            str_detect(category, "male") ~ "male",
+                            str_detect(category, "total") ~ "total"),
+         time = case_when(str_detect(category, "full_time") ~ "full time",
+                          str_detect(category, "part_time") ~ "part time")) %>% 
+  ggplot(aes(x = year, y = employed)) +
+  geom_point(aes(colour = gender, shape = time, size = 5))+
+  geom_line(aes(colour = gender, shape = time)) +
+  theme_classic() +
+  theme(legend.position = "bottom") +
+  transition_reveal(year)
+
 
 employed_gender %>%
   gather(key = category, value = employed, - year) %>% 
@@ -94,11 +96,10 @@ employed_gender %>%
   scale_y_continuous(labels = percent_format(scale =1)) +
   theme(legend.position = "bottom") +
   transition_reveal(year)
-```
 
 
 
-```{r}
+
 
 earnings_female %>% 
   ggplot(aes(x = Year, y = percent )) +
@@ -112,6 +113,3 @@ earnings_female %>%
   transition_reveal(Year)
 
                      
-
-
-```
